@@ -1846,16 +1846,12 @@ namespace Nop.Web.Areas.Admin.Controllers
                 _notificationService.ErrorNotification("No product found with the specified id");
                 return RedirectToAction("List");
             }
-            ViewBag.ProductId = productId;
 
-            var model = new AddSpecificationAttributeModel();
-            if (!specificationId.HasValue)
-                return View(model);
-            
             //try to get a product specification attribute with the specified id
             try
             {
-                model = _productModelFactory.PrepareAddSpecificationAttributeModel(specificationId.Value);
+                var model = _productModelFactory.PrepareAddSpecificationAttributeModel(productId, specificationId);
+                return View(model);
             }
             catch (Exception ex)
             {
@@ -1864,8 +1860,6 @@ namespace Nop.Web.Areas.Admin.Controllers
                 SaveSelectedTabName("tab-specification-attributes");
                 return RedirectToAction("Edit", new { id = productId });
             }
-
-            return View(model);
         }
 
         [HttpPost]

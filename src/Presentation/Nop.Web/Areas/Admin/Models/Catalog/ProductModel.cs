@@ -445,6 +445,9 @@ namespace Nop.Web.Areas.Admin.Models.Catalog
         [NopResourceDisplayName("Admin.Catalog.Products.ProductWarehouseInventory")]
         public IList<ProductWarehouseInventoryModel> ProductWarehouseInventoryModels { get; set; }
 
+        //specification attributes
+        public bool HasAvailableSpecificationAttributes { get; set; }
+
         //copy product
         public CopyProductModel CopyProductModel { get; set; }
 

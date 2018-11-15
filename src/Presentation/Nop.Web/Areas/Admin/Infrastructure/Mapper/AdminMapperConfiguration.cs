@@ -562,7 +562,8 @@ namespace Nop.Web.Areas.Admin.Infrastructure.Mapper
                 .ForMember(entity => entity.AttributeName, options => options.Ignore())
                 .ForMember(entity => entity.ValueRaw, options => options.Ignore())
                 .ForMember(entity => entity.Value, options => options.Ignore())
-                .ForMember(entity => entity.AvailableOptions, options => options.Ignore());
+                .ForMember(entity => entity.AvailableOptions, options => options.Ignore())
+                .ForMember(entity => entity.AvailableAttributes, options => options.Ignore());
 
             CreateMap<AddSpecificationAttributeModel, ProductSpecificationAttribute>()
                 .ForMember(model => model.CustomValue, options => options.Ignore())

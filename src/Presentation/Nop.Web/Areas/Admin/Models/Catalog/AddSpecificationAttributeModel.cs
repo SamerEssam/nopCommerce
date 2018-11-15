@@ -15,6 +15,7 @@ namespace Nop.Web.Areas.Admin.Models.Catalog
         public AddSpecificationAttributeModel()
         {
             AvailableOptions = new List<SelectListItem>();
+            AvailableAttributes = new List<SelectListItem>();
             ShowOnProductPage = true;
             AttributeName = string.Empty;
             AttributeTypeName = string.Empty;
@@ -36,6 +37,8 @@ namespace Nop.Web.Areas.Admin.Models.Catalog
         public int AttributeId { get; set; }
 
         public int ProductId { get; set; }
+
+        public IList<SelectListItem> AvailableAttributes { get; set; }
 
         [NopResourceDisplayName("Admin.Catalog.Products.SpecificationAttributes.Fields.SpecificationAttribute")]
         public string AttributeName { get; set; }

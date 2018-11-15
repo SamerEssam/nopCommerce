@@ -131,9 +131,10 @@ namespace Nop.Web.Areas.Admin.Factories
         /// <summary>
         /// Prepare paged product specification attribute model
         /// </summary>
-        /// <param name="specificationId">Specification id</param>
+        /// <param name="productId">Product id</param>
+        /// <param name="specificationId">Specification attribute id</param>
         /// <returns>Product specification attribute model</returns>
-        AddSpecificationAttributeModel PrepareAddSpecificationAttributeModel(int specificationId);
+        AddSpecificationAttributeModel PrepareAddSpecificationAttributeModel(int productId, int? specificationId);
 
         /// <summary>
         /// Prepare product tag search model

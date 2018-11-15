@@ -6,6 +6,7 @@ using System.Net;
 using System.Text;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Nop.Core;
+using Nop.Core.Caching;
 using Nop.Core.Domain.Catalog;
 using Nop.Core.Domain.Directory;
 using Nop.Core.Domain.Discounts;
@@ -23,6 +24,7 @@ using Nop.Services.Orders;
 using Nop.Services.Seo;
 using Nop.Services.Shipping;
 using Nop.Services.Stores;
+using Nop.Web.Areas.Admin.Infrastructure.Cache;
 using Nop.Web.Areas.Admin.Infrastructure.Mapper.Extensions;
 using Nop.Web.Areas.Admin.Models.Catalog;
 using Nop.Web.Areas.Admin.Models.Orders;
@@ -64,6 +66,7 @@ namespace Nop.Web.Areas.Admin.Factories
         private readonly IShippingService _shippingService;
         private readonly IShoppingCartService _shoppingCartService;
         private readonly ISpecificationAttributeService _specificationAttributeService;
+        private readonly IStaticCacheManager _cacheManager;
         private readonly IStoreMappingSupportedModelFactory _storeMappingSupportedModelFactory;
         private readonly IStoreService _storeService;
         private readonly IUrlRecordService _urlRecordService;
@@ -102,6 +105,7 @@ namespace Nop.Web.Areas.Admin.Factories
             IShippingService shippingService,
             IShoppingCartService shoppingCartService,
             ISpecificationAttributeService specificationAttributeService,
+            IStaticCacheManager cacheManager,
             IStoreMappingSupportedModelFactory storeMappingSupportedModelFactory,
             IStoreService storeService,
             IUrlRecordService urlRecordService,
@@ -113,6 +117,7 @@ namespace Nop.Web.Areas.Admin.Factories
             this._currencySettings = currencySettings;
             this._aclSupportedModelFactory = aclSupportedModelFactory;
             this._baseAdminModelFactory = baseAdminModelFactory;
+            this._cacheManager = cacheManager;
             this._categoryService = categoryService;
             this._currencyService = currencyService;
             this._customerService = customerService;
@@ -811,6 +816,8 @@ namespace Nop.Web.Areas.Admin.Factories
             model.BaseWeightIn = _measureService.GetMeasureWeightById(_measureSettings.BaseWeightId).Name;
             model.BaseDimensionIn = _measureService.GetMeasureDimensionById(_measureSettings.BaseDimensionId).Name;
             model.IsLoggedInAsVendor = _workContext.CurrentVendor != null;
+            model.HasAvailableSpecificationAttributes = _cacheManager.Get(ModelCacheEventConsumer.SPEC_ATTRIBUTES_MODEL_KEY,
+                    () => _specificationAttributeService.GetSpecificationAttributesWithOptions()).Any();
 
             //prepare localized models
             if (!excludeProperties)
@@ -1412,11 +1419,26 @@ namespace Nop.Web.Areas.Admin.Factories
         /// <summary>
         /// Prepare paged product specification attribute model
         /// </summary>
-        /// <param name="specificationId">Specification id</param>
+        /// <param name="productId">Product id</param>
+        /// <param name="specificationId">Specification attribute id</param>
         /// <returns>Product specification attribute model</returns>
-        public virtual AddSpecificationAttributeModel PrepareAddSpecificationAttributeModel(int specificationId)
+        public virtual AddSpecificationAttributeModel PrepareAddSpecificationAttributeModel(int productId, int? specificationId)
         {
-            var attribute = _specificationAttributeService.GetProductSpecificationAttributeById(specificationId);
+            if (!specificationId.HasValue)
+            {
+                return new AddSpecificationAttributeModel
+                {
+                    AvailableAttributes = _cacheManager.Get(ModelCacheEventConsumer.SPEC_ATTRIBUTES_MODEL_KEY,
+                            () => _specificationAttributeService.GetSpecificationAttributesWithOptions())
+                        .Select(sa => new SelectListItem {Text = sa.Name, Value = sa.Id.ToString()})
+                        .ToList(),
+                    ProductId = productId
+                };
+
+            }
+
+            var attribute = _specificationAttributeService.GetProductSpecificationAttributeById(specificationId.Value);
+
             if (attribute == null)
             {
                 throw new ArgumentException("No specification attribute found with the specified id");
@@ -1432,9 +1454,15 @@ namespace Nop.Web.Areas.Admin.Factories
             model.AttributeTypeName = _localizationService.GetLocalizedEnum(attribute.AttributeType);
             model.AttributeName = attribute.SpecificationAttributeOption.SpecificationAttribute.Name;
 
+            model.AvailableAttributes = _cacheManager.Get(ModelCacheEventConsumer.SPEC_ATTRIBUTES_MODEL_KEY,
+                    () => _specificationAttributeService.GetSpecificationAttributesWithOptions())
+                .Select(sa => new SelectListItem {Text = sa.Name, Value = sa.Id.ToString()})
+                .ToList();
+
             model.AvailableOptions = _specificationAttributeService
                 .GetSpecificationAttributeOptionsBySpecificationAttribute(model.AttributeId)
-                .Select(option => new SelectListItem { Text = option.Name, Value = option.Id.ToString() }).ToList();
+                .Select(option => new SelectListItem { Text = option.Name, Value = option.Id.ToString() })
+                .ToList();
 
             switch (attribute.AttributeType)
             {

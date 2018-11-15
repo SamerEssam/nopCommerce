@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq.Expressions;
+using Microsoft.AspNetCore.Http;
 using Nop.Core.Configuration;
 using Nop.Core.Domain.Configuration;
 
@@ -149,6 +150,13 @@ namespace Nop.Services.Configuration
         /// Clear cache
         /// </summary>
         void ClearCache();
+
+
+        /// <summary>
+        /// Upload favicon and app icons
+        /// </summary>
+        /// <param name="archivefile">Archive file</param>
+        void UploadIconsArchive(IFormFile archivefile);
 
         /// <summary>
         /// Get setting key (stored into database)

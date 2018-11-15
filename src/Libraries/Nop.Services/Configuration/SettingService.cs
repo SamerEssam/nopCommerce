@@ -1,15 +1,19 @@
-using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Linq;
-using System.Linq.Expressions;
-using System.Reflection;
+using Microsoft.AspNetCore.Http;
 using Nop.Core;
 using Nop.Core.Caching;
 using Nop.Core.Configuration;
 using Nop.Core.Data;
 using Nop.Core.Domain.Configuration;
+using Nop.Core.Infrastructure;
 using Nop.Services.Events;
+using System;
+using System.Collections.Generic;
+using System.ComponentModel;
+using System.IO;
+using System.IO.Compression;
+using System.Linq;
+using System.Linq.Expressions;
+using System.Reflection;
 
 namespace Nop.Services.Configuration
 {
@@ -23,6 +27,8 @@ namespace Nop.Services.Configuration
         private readonly IEventPublisher _eventPublisher;
         private readonly IRepository<Setting> _settingRepository;
         private readonly IStaticCacheManager _cacheManager;
+        private readonly INopFileProvider _fileProvider;
+        private readonly IStoreContext _storeContext;
 
         #endregion
 
@@ -30,11 +36,15 @@ namespace Nop.Services.Configuration
 
         public SettingService(IEventPublisher eventPublisher,
             IRepository<Setting> settingRepository,
-            IStaticCacheManager cacheManager)
+            IStaticCacheManager cacheManager,
+            INopFileProvider fileProvider,
+            IStoreContext storeContext)
         {
             this._eventPublisher = eventPublisher;
             this._settingRepository = settingRepository;
             this._cacheManager = cacheManager;
+            this._fileProvider = fileProvider;
+            this._storeContext = storeContext;
         }
 
         #endregion
@@ -143,6 +153,51 @@ namespace Nop.Services.Configuration
                 InsertSetting(setting, clearCache);
             }
         }
+
+
+        /// <summary>
+        /// Upload favicon and app icons
+        /// </summary>
+        /// <param name="archivefile">Archive file which contains a set of special icons for different OS and devices</param>
+        public virtual void UploadIconsArchive(IFormFile archivefile)
+        {
+            if (archivefile == null)
+                throw new ArgumentNullException(nameof(archivefile));
+
+            var zipFilePath = string.Empty;
+            try
+            {
+                //only zip archives are supported
+                if (!_fileProvider.GetFileExtension(archivefile.FileName)?.Equals(".zip", StringComparison.InvariantCultureIgnoreCase) ?? true)
+                    throw new Exception("Only zip archives are supported");
+
+                //copy original archive to the temp directory
+                var storeIconsPath = _fileProvider.MapPath($"~/wwwroot/icons_{_storeContext.CurrentStore.Id}");
+
+                if (!_fileProvider.DirectoryExists(storeIconsPath))
+                {
+                    _fileProvider.CreateDirectory(storeIconsPath);
+                }
+                else
+                {
+                    _fileProvider.DeleteDirectory(storeIconsPath);
+                    _fileProvider.CreateDirectory(storeIconsPath);
+                }
+
+                zipFilePath = _fileProvider.Combine(storeIconsPath, archivefile.FileName);
+                using (var fileStream = new FileStream(zipFilePath, FileMode.Create))
+                    archivefile.CopyTo(fileStream);
+
+                ZipFile.ExtractToDirectory(zipFilePath, storeIconsPath);
+            }
+            finally
+            {
+                //delete temporary file
+                if (!string.IsNullOrEmpty(zipFilePath))
+                    _fileProvider.DeleteFile(zipFilePath);
+            }
+        }
+
 
         #endregion
 

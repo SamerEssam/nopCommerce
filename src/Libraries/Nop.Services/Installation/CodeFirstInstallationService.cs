@@ -5981,7 +5981,7 @@ namespace Nop.Services.Installation
                 JqueryMigrateScriptLoggingActive = false,
                 SupportPreviousNopcommerceVersions = true,
                 UseResponseCompression = false,
-                StaticFilesCacheControl = "public,max-age=604800"
+                FaviconAndAppIconsHeadCode = ""
             });
 
             settingService.SaveSetting(new SeoSettings

@@ -5,6 +5,7 @@ using Nop.Core;
 using Nop.Core.Caching;
 using Nop.Core.Data;
 using Nop.Core.Domain.Configuration;
+using Nop.Core.Infrastructure;
 using Nop.Services.Configuration;
 using Nop.Services.Events;
 
@@ -12,7 +13,7 @@ namespace Nop.Services.Tests.Configuration
 {
     public class ConfigFileSettingService : SettingService
     {
-        public ConfigFileSettingService(IEventPublisher eventPublisher, IRepository<Setting> settingRepository, IStaticCacheManager cacheManager) : base(eventPublisher, settingRepository, cacheManager)
+        public ConfigFileSettingService(IEventPublisher eventPublisher, IRepository<Setting> settingRepository, IStaticCacheManager cacheManager, INopFileProvider fileProvider, IStoreContext storeContext) : base(eventPublisher, settingRepository, cacheManager, fileProvider, storeContext)
         {
         }
 

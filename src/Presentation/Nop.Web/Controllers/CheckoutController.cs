@@ -1138,6 +1138,29 @@ namespace Nop.Web.Controllers
                     var address = _workContext.CurrentCustomer.Addresses.FirstOrDefault(a => a.Id == billingAddressId);
                     if (address == null)
                         throw new Exception("Address can't be loaded");
+                    if (!_addressService.IsAddressValid(address))
+                    {
+                        var customAttributeWarnings = _addressAttributeParser.GetAttributeWarnings(address.CustomAttributes);
+                        foreach (var error in customAttributeWarnings)
+                        {
+                            ModelState.AddModelError("", error);
+                        }
+
+                        //model is not valid. redisplay the form with errors
+                        var billingAddressModel = _checkoutModelFactory.PrepareBillingAddressModel(cart,
+                            selectedCountryId: address.CountryId,
+                            overrideAttributesXml: address.CustomAttributes);
+                        billingAddressModel.NewAddressPreselected = true;
+                        return Json(new
+                        {
+                            update_section = new UpdateSectionJsonModel
+                            {
+                                name = "billing",
+                                html = RenderPartialViewToString("OpcBillingAddress", billingAddressModel)
+                            },
+                            wrong_billing_address = true,
+                        });
+                    }
 
                     _workContext.CurrentCustomer.BillingAddress = address;
                     _customerService.UpdateCustomer(_workContext.CurrentCustomer);
@@ -1318,6 +1341,31 @@ namespace Nop.Web.Controllers
                     var address = _workContext.CurrentCustomer.Addresses.FirstOrDefault(a => a.Id == shippingAddressId);
                     if (address == null)
                         throw new Exception("Address can't be loaded");
+
+                    if (_addressService.IsAddressValid(address))
+                    {
+                        var customAttributeWarnings = _addressAttributeParser.GetAttributeWarnings(address.CustomAttributes);
+                        foreach (var error in customAttributeWarnings)
+                        {
+                            ModelState.AddModelError("", error);
+                        }
+
+
+                        //model is not valid. redisplay the form with errors
+                        var shippingAddressModel = _checkoutModelFactory.PrepareShippingAddressModel(
+                            selectedCountryId: address.CountryId,
+                            overrideAttributesXml: address.CustomAttributes);
+                        shippingAddressModel.NewAddressPreselected = true;
+                        return Json(new
+                        {
+                            update_section = new UpdateSectionJsonModel
+                            {
+                                name = "shipping",
+                                html = RenderPartialViewToString("OpcShippingAddress", shippingAddressModel)
+                            }
+                        });
+                        
+                    }
 
                     _workContext.CurrentCustomer.ShippingAddress = address;
                     _customerService.UpdateCustomer(_workContext.CurrentCustomer);
